@@ -1,4 +1,4 @@
-# Podman Containerfile for running the pi coding agent in an Arch Linux sandbox.
+# Podman Containerfile for running the pi (or claude) coding agent in an Arch Linux sandbox.
 #
 # Build:
 #   podman build -t pi-sandbox -f Containerfile .

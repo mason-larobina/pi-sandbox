@@ -5,9 +5,10 @@ set -euo pipefail
 # creates missing paths as empty directories on the host (e.g. a directory at
 # ~/.claude.json or ~/.gitconfig, which then breaks claude/git on the whole
 # system).
-[ -f "$HOME/.gitconfig" ] || touch "$HOME/.gitconfig"
+mkdir -p "$HOME/.pi"
 mkdir -p "$HOME/.claude"
 touch "$HOME/.claude.json"
+touch "$HOME/.gitconfig"
 
 podman run --rm -it \
   -v "$PWD:/workspace" \
