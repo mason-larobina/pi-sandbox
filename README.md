@@ -4,6 +4,12 @@ Podman sandbox for running the [pi](https://pi.dev) (or Claude Code) coding agen
 in an isolated Arch Linux container, with your configs and the current directory
 mounted in.
 
+> **Note:** This project is primarily for my personal use and tailored to my own
+> setup, so I don't actively review or merge pull requests. If it's useful to
+> you, feel free to **fork it and make it your own** — that's the best way to
+> get what you want out of it. That said, bug reports and suggestions for
+> cleaner approaches are always welcome and reasonable.
+
 ## Prerequisites
 
 - [Podman](https://podman.io/) (or Docker, with minor mount tweaks)
