@@ -23,6 +23,16 @@ Code, and the tools they need).
 ./run.sh <args...>
 ```
 
+It is recommended to add a symbolic link to `run.sh` in `~/.local/bin/` so it's
+on your `PATH`:
+
+```sh
+ln -s "$PWD/run.sh" ~/.local/bin/s
+```
+
+I use the short name `s`, so I can launch agents from any directory with e.g.
+`s pi` or `s claude`.
+
 The current directory is mounted at `/workspace` inside the container. Your
 `~/.pi`, `~/.claude`, `~/.claude.json`, and `~/.gitconfig` are mounted read/write
 (or read-only for gitconfig) so agent configs persist on the host. Arguments
