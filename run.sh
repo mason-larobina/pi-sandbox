@@ -10,6 +10,8 @@ mkdir -p "$HOME/.claude"
 touch "$HOME/.claude.json"
 touch "$HOME/.gitconfig"
 
+#mkdir -p "$HOME/.gradle"
+
 podman run --rm -it \
   -v "$PWD:/workspace" \
   -v "$HOME/.pi:/home/sandbox/.pi" \
@@ -20,3 +22,5 @@ podman run --rm -it \
   --userns=keep-id \
   sandbox \
   "${@}"
+
+#  -v "$HOME/.gradle:/home/sandbox/.gradle" \

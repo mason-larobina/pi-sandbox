@@ -17,6 +17,8 @@ RUN pacman -Sy archlinux-keyring --noconfirm && \
       curl \
       ffmpeg \
       git \
+      imagemagick \
+      jdk25-openjdk \
       mdformat \
       musl \
       nodejs \
@@ -24,6 +26,8 @@ RUN pacman -Sy archlinux-keyring --noconfirm && \
       npm \
       prettier \
       python \
+      python-numpy \
+      python-pillow \
       python-pip \
       ripgrep \
       rustup \
