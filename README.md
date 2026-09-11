@@ -23,6 +23,12 @@ mounted in.
 This builds the `sandbox` image from the `Containerfile` (installs pi, Claude
 Code, and the tools they need).
 
+The image also includes the [`yay`](https://github.com/Jguer/yay) AUR helper,
+built from source. `sudo` is intentionally left locked (the `sandbox` account has
+no password), so packages cannot be installed at runtime — only those baked
+into this image are available. yay still works for read-only operations such as
+searching and inspecting the AUR.
+
 ## Run
 
 ```sh

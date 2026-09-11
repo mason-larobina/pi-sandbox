@@ -17,6 +17,7 @@ RUN pacman -Sy archlinux-keyring --noconfirm && \
       curl \
       ffmpeg \
       git \
+      go \
       htop \
       hyperfine \
       imagemagick \
@@ -44,6 +45,11 @@ RUN pacman -Sy archlinux-keyring --noconfirm && \
 # Create the unprivileged 'sandbox' user with a home directory.
 RUN useradd --create-home -s /usr/bin/bash -u 1000 sandbox
 
+# sudo is deliberately left locked: the account has no password and gets no
+# NOPASSWD rule, so packages cannot be installed at runtime -- only those baked
+# into this image are present. yay (below) is built as the sandbox user and
+# installed by the build's own root, so installing it needs no sudo.
+
 # Install pi via the official installer as the sandbox user so binaries land
 # in /home/sandbox/.local and use the sandbox user's PATH.
 USER sandbox
@@ -63,6 +69,24 @@ RUN curl -fsSL https://pi.dev/install.sh | sh
 RUN npm config set prefix /home/sandbox/.local && \
     npm install -g --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code && \
     npm cache clean --force
+
+# Install yay (AUR helper) from the AUR. makepkg refuses to run as root, so
+# build it as the sandbox user, then install the resulting package as root. The
+# `go` makedepend is installed in the system package step above.
+RUN mkdir -p /home/sandbox/src && \
+    curl -fsSL -o /home/sandbox/src/yay.tar.gz \
+      https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz && \
+    tar -xzf /home/sandbox/src/yay.tar.gz -C /home/sandbox/src && \
+    cd /home/sandbox/src/yay && \
+    makepkg --noconfirm
+
+# Install yay, then drop the build tree and the Go build cache to keep the
+# image small. The `yay-[0-9]*` glob skips the generated yay-debug package.
+USER root
+RUN pacman -U --noconfirm /home/sandbox/src/yay/yay-[0-9]*.pkg.tar.zst && \
+    rm -rf /home/sandbox/src /home/sandbox/.cache/go-build && \
+    pacman -Scc --noconfirm
+USER sandbox
 
 # Default to a login-style shell for the sandbox user so PATH is set up
 # (the installer typically amends ~/.bashrc / profile).
