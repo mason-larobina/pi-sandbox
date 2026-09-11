@@ -24,9 +24,13 @@ This builds the `sandbox` image from the `Containerfile` (installs pi, Claude
 Code, and the tools they need).
 
 The image also includes the [`yay`](https://github.com/Jguer/yay) AUR helper,
-built from source. `sudo` is intentionally left locked (the `sandbox` account has
-no password), so packages cannot be installed at runtime — only those baked
-into this image are available. yay still works for read-only operations such as
+the [`flamegraph`](https://github.com/brendangregg/FlameGraph) and
+[`async-profiler`](https://github.com/async-profiler/async-profiler) profiling
+tools, and the JDK's `jfr`, `jlink`, `jmod`, `jhsdb`, `jstatd`, and `serialver`
+tools symlinked into `/usr/local/bin`. All are built/installed at image-build
+time. `sudo` is intentionally left locked (the `sandbox` account has no
+password), so packages cannot be installed at runtime — only those baked into
+this image are available. yay still works for read-only operations such as
 searching and inspecting the AUR.
 
 ## Run

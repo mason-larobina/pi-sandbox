@@ -42,13 +42,19 @@ RUN pacman -Sy archlinux-keyring --noconfirm && \
       yt-dlp \
     && pacman -Scc --noconfirm
 
+# Arch's jdk25-openjdk only links a subset of its tools into /usr/bin. Expose
+# the rest on PATH; `jfr` in particular pairs with async-profiler/JFR output.
+RUN for tool in jfr jlink jmod jhsdb jstatd serialver; do \
+      ln -sf /usr/lib/jvm/java-25-openjdk/bin/"$tool" /usr/local/bin/"$tool"; \
+    done
+
 # Create the unprivileged 'sandbox' user with a home directory.
 RUN useradd --create-home -s /usr/bin/bash -u 1000 sandbox
 
 # sudo is deliberately left locked: the account has no password and gets no
 # NOPASSWD rule, so packages cannot be installed at runtime -- only those baked
-# into this image are present. yay (below) is built as the sandbox user and
-# installed by the build's own root, so installing it needs no sudo.
+# into this image are present. The AUR packages (below) are built as the sandbox
+# user and installed by the build's own root, so installing them needs no sudo.
 
 # Install pi via the official installer as the sandbox user so binaries land
 # in /home/sandbox/.local and use the sandbox user's PATH.
@@ -70,20 +76,26 @@ RUN npm config set prefix /home/sandbox/.local && \
     npm install -g --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code && \
     npm cache clean --force
 
-# Install yay (AUR helper) from the AUR. makepkg refuses to run as root, so
-# build it as the sandbox user, then install the resulting package as root. The
-# `go` makedepend is installed in the system package step above.
-RUN mkdir -p /home/sandbox/src && \
-    curl -fsSL -o /home/sandbox/src/yay.tar.gz \
-      https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz && \
-    tar -xzf /home/sandbox/src/yay.tar.gz -C /home/sandbox/src && \
-    cd /home/sandbox/src/yay && \
-    makepkg --noconfirm
+# Build AUR packages from source. makepkg refuses to run as root, so build them
+# as the sandbox user; the resulting packages are installed as root below. yay's
+# `go` makedepend is installed in the system package step above, and flamegraph
+# and async-profiler only need perl/awk/java which are already present.
+RUN set -e; \
+    mkdir -p /home/sandbox/src; \
+    for pkg in yay flamegraph async-profiler; do \
+      curl -fsSL -o "/home/sandbox/src/$pkg.tar.gz" \
+        "https://aur.archlinux.org/cgit/aur.git/snapshot/$pkg.tar.gz"; \
+      tar -xzf "/home/sandbox/src/$pkg.tar.gz" -C /home/sandbox/src; \
+      ( cd "/home/sandbox/src/$pkg" && makepkg --noconfirm ); \
+    done
 
-# Install yay, then drop the build tree and the Go build cache to keep the
-# image small. The `yay-[0-9]*` glob skips the generated yay-debug package.
+# Install the built AUR packages, then drop the build tree and Go build cache to
+# keep the image small. The `[0-9]*` globs skip the generated -debug packages.
 USER root
-RUN pacman -U --noconfirm /home/sandbox/src/yay/yay-[0-9]*.pkg.tar.zst && \
+RUN pacman -U --noconfirm \
+      /home/sandbox/src/yay/yay-[0-9]*.pkg.tar.zst \
+      /home/sandbox/src/flamegraph/flamegraph-[0-9]*.pkg.tar.zst \
+      /home/sandbox/src/async-profiler/async-profiler-[0-9]*.pkg.tar.zst && \
     rm -rf /home/sandbox/src /home/sandbox/.cache/go-build && \
     pacman -Scc --noconfirm
 USER sandbox
