@@ -5,15 +5,17 @@ set -euo pipefail
 # creates missing paths as empty directories on the host (e.g. a directory at
 # ~/.claude.json or ~/.gitconfig, which then breaks claude/git on the whole
 # system).
+mkdir -p "$HOME/src/tmp"
+mkdir -p "$HOME/src/worktree"
 mkdir -p "$HOME/.pi"
 mkdir -p "$HOME/.claude"
 touch "$HOME/.claude.json"
 touch "$HOME/.gitconfig"
 
-#mkdir -p "$HOME/.gradle"
-
 podman run --rm -it \
   -v "$PWD:/workspace" \
+  -v "$HOME/src/tmp:/tmp" \
+  -v "$HOME/src/worktree:/worktree" \
   -v "$HOME/.pi:/home/sandbox/.pi" \
   -v "$HOME/.claude:/home/sandbox/.claude" \
   -v "$HOME/.claude.json:/home/sandbox/.claude.json" \
@@ -22,5 +24,3 @@ podman run --rm -it \
   --userns=keep-id \
   sandbox \
   "${@}"
-
-#  -v "$HOME/.gradle:/home/sandbox/.gradle" \

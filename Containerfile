@@ -17,9 +17,13 @@ RUN pacman -Sy archlinux-keyring --noconfirm && \
       curl \
       ffmpeg \
       git \
+      htop \
+      hyperfine \
       imagemagick \
       jdk25-openjdk \
+      jq \
       mdformat \
+      mdformat-tables \
       musl \
       nodejs \
       noto-fonts \
@@ -31,7 +35,9 @@ RUN pacman -Sy archlinux-keyring --noconfirm && \
       python-pip \
       ripgrep \
       rustup \
+      sysstat \
       tailscale \
+      unzip \
       yt-dlp \
     && pacman -Scc --noconfirm
 
