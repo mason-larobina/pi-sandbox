@@ -53,8 +53,8 @@ RUN useradd --create-home -s /usr/bin/bash -u 1000 sandbox
 
 # sudo is deliberately left locked: the account has no password and gets no
 # NOPASSWD rule, so packages cannot be installed at runtime -- only those baked
-# into this image are present. The AUR packages (below) are built as the sandbox
-# user and installed by the build's own root, so installing them needs no sudo.
+# into this image are present. Software built below is compiled as the sandbox
+# user and installed by the build's own root, so it needs no sudo.
 
 # Install pi via the official installer as the sandbox user so binaries land
 # in /home/sandbox/.local and use the sandbox user's PATH.
@@ -76,26 +76,45 @@ RUN npm config set prefix /home/sandbox/.local && \
     npm install -g --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code && \
     npm cache clean --force
 
-# Build AUR packages from source. makepkg refuses to run as root, so build them
-# as the sandbox user; the resulting packages are installed as root below. yay's
-# `go` makedepend is installed in the system package step above, and flamegraph
-# and async-profiler only need perl/awk/java which are already present.
+# Build the AUR packages (yay and flamegraph-git) from source. makepkg refuses
+# to run as root, so build them as the sandbox user; the packages are installed
+# as root below. `go` (yay's makedepend), git, perl, and awk are all provided by
+# the system package step above. flamegraph-git tracks upstream HEAD.
 RUN set -e; \
     mkdir -p /home/sandbox/src; \
-    for pkg in yay flamegraph async-profiler; do \
+    for pkg in yay flamegraph-git; do \
       curl -fsSL -o "/home/sandbox/src/$pkg.tar.gz" \
         "https://aur.archlinux.org/cgit/aur.git/snapshot/$pkg.tar.gz"; \
       tar -xzf "/home/sandbox/src/$pkg.tar.gz" -C /home/sandbox/src; \
       ( cd "/home/sandbox/src/$pkg" && makepkg --noconfirm ); \
     done
 
-# Install the built AUR packages, then drop the build tree and Go build cache to
-# keep the image small. The `[0-9]*` globs skip the generated -debug packages.
+# async-profiler-git's PKGBUILD is stale (it still expects the pre-4.x build
+# layout), so build upstream HEAD directly. `make all` is what the AUR package
+# runs; only the install paths differ.
+RUN git clone --depth 1 https://github.com/async-profiler/async-profiler.git \
+      /home/sandbox/src/async-profiler && \
+    cd /home/sandbox/src/async-profiler && \
+    make all
+
+# Install the AUR packages plus async-profiler, then drop the build trees and Go
+# build cache to keep the image small. The `yay-[0-9]*` and `flamegraph-git-r*`
+# globs skip any generated -debug packages.
 USER root
 RUN pacman -U --noconfirm \
       /home/sandbox/src/yay/yay-[0-9]*.pkg.tar.zst \
-      /home/sandbox/src/flamegraph/flamegraph-[0-9]*.pkg.tar.zst \
-      /home/sandbox/src/async-profiler/async-profiler-[0-9]*.pkg.tar.zst && \
+      /home/sandbox/src/flamegraph-git/flamegraph-git-r*.pkg.tar.zst && \
+    install -d /opt/async-profiler/lib /opt/async-profiler/jar /opt/async-profiler/bin && \
+    install -m644 /home/sandbox/src/async-profiler/build/lib/libasyncProfiler.so \
+                 /opt/async-profiler/lib/ && \
+    install -m644 /home/sandbox/src/async-profiler/build/jar/async-profiler.jar \
+                 /home/sandbox/src/async-profiler/build/jar/jfr-converter.jar \
+                 /opt/async-profiler/jar/ && \
+    install -m755 /home/sandbox/src/async-profiler/build/bin/asprof \
+                   /home/sandbox/src/async-profiler/build/bin/jfrconv \
+                   /opt/async-profiler/bin/ && \
+    ln -sf /opt/async-profiler/bin/asprof /usr/local/bin/asprof && \
+    ln -sf /opt/async-profiler/bin/jfrconv /usr/local/bin/jfrconv && \
     rm -rf /home/sandbox/src /home/sandbox/.cache/go-build && \
     pacman -Scc --noconfirm
 USER sandbox
