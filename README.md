@@ -51,9 +51,10 @@ I use the short name `s`, so I can launch agents from any directory with e.g.
 `s pi` or `s claude`.
 
 The current directory is mounted at `/workspace` inside the container. Your
-`~/.pi`, `~/.claude`, `~/.claude.json`, and `~/.gitconfig` are mounted read/write
-(or read-only for gitconfig) so agent configs persist on the host. Arguments
-are passed through, e.g.:
+`~/.pi`, `~/.claude`, `~/.claude.json`, `~/.cargo`, and `~/.gitconfig` are
+mounted read/write (or read-only for gitconfig) so agent configs and
+`cargo install`-ed binaries persist on the host. Arguments are passed through,
+e.g.:
 
 ```sh
 ./run.sh            # start the default agent

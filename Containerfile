@@ -121,7 +121,9 @@ USER sandbox
 
 # Default to a login-style shell for the sandbox user so PATH is set up
 # (the installer typically amends ~/.bashrc / profile).
-ENV PATH="/home/sandbox/.local/bin:${PATH}"
+# Include ~/.cargo/bin so `cargo install`-ed binaries are runnable; run.sh
+# bind-mounts the host's ~/.cargo here so they persist across container runs.
+ENV PATH="/home/sandbox/.cargo/bin:/home/sandbox/.local/bin:${PATH}"
 # run.sh overrides this with `-w /workspace`; /home/sandbox is a sensible,
 # user-writable default for bare `docker run` without the bind mount.
 WORKDIR /home/sandbox
