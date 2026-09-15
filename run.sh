@@ -6,7 +6,11 @@ set -euo pipefail
 # ~/.claude.json or ~/.gitconfig, which then breaks claude/git on the whole
 # system).
 
-mkdir -p "$HOME/src/tmp"
+# Mount a per-day tmp directory (not the shared parent) so it's easy to tell
+# what scratch state is fresh and what's stale. Override with TMP_DATE=... .
+TMP_DATE="${TMP_DATE:-$(date +%Y-%m-%d)}"
+TMP_DIR="$HOME/src/tmp/$TMP_DATE"
+mkdir -p "$TMP_DIR"
 mkdir -p "$HOME/src/worktree"
 mkdir -p "$HOME/.pi"
 mkdir -p "$HOME/.claude"
@@ -16,7 +20,7 @@ touch "$HOME/.gitconfig"
 
 podman run --rm -it \
   -v "$PWD:/workspace" \
-  -v "$HOME/src/tmp:/tmp" \
+  -v "$TMP_DIR:/tmp" \
   -v "$HOME/src/worktree:/worktree" \
   -v "$HOME/.pi:/home/sandbox/.pi" \
   -v "$HOME/.claude:/home/sandbox/.claude" \
