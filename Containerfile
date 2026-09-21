@@ -53,11 +53,15 @@ RUN useradd --create-home -s /usr/bin/bash -u 1000 sandbox
 
 # sudo is deliberately left locked: the account has no password and gets no
 # NOPASSWD rule, so packages cannot be installed at runtime -- only those baked
-# into this image are present. Software built below is compiled as the sandbox
-# user and installed by the build's own root, so it needs no sudo.
+# into this image are present. Most software below is compiled as the sandbox
+# user and installed by the build's own root, so it needs no sudo; the one
+# exception is the yay step, which grants and revokes a NOPASSWD rule inside a
+# single layer so the rule never reaches the shipped image.
 
-# Install pi via the official installer as the sandbox user so binaries land
-# in /home/sandbox/.local and use the sandbox user's PATH.
+# Build the remaining software as the sandbox user: makepkg refuses to run as
+# root, and npm-installed binaries land in /home/sandbox/.local on the sandbox
+# user's PATH. The agents themselves come from the AUR further down, once yay
+# exists.
 USER sandbox
 WORKDIR /home/sandbox
 
@@ -68,13 +72,10 @@ RUN rustup target install x86_64-unknown-linux-musl
 # Mount point for coding agent configs.
 RUN mkdir -p /home/sandbox/.pi /home/sandbox/.claude
 
-# Install pi coding agent.
-RUN curl -fsSL https://pi.dev/install.sh | sh
-
-# Install claude code locally under ~/.local so binaries land in ~/.local/bin.
-RUN npm config set prefix /home/sandbox/.local && \
-    npm install -g --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code && \
-    npm cache clean --force
+# Point npm's global prefix at ~/.local so anything `npm install -g`-ed lands on
+# the sandbox user's PATH instead of the unwritable /usr. Claude Code itself
+# comes from the AUR below, not from npm.
+RUN npm config set prefix /home/sandbox/.local
 
 # Build the AUR packages (yay and flamegraph-git) from source. makepkg refuses
 # to run as root, so build them as the sandbox user; the packages are installed
@@ -116,6 +117,23 @@ RUN pacman -U --noconfirm \
     ln -sf /opt/async-profiler/bin/asprof /usr/local/bin/asprof && \
     ln -sf /opt/async-profiler/bin/jfrconv /usr/local/bin/jfrconv && \
     rm -rf /home/sandbox/src /home/sandbox/.cache/go-build && \
+    pacman -Scc --noconfirm
+
+# Install both coding agents from the AUR with yay. yay refuses to run as root
+# and shells out to pacman via sudo, so grant the sandbox user a NOPASSWD rule
+# for the duration of this one layer and delete it again before the layer is
+# committed -- the shipped image still has sudo locked. pi-coding-agent builds
+# from source: yay pulls its runtime deps (fd, ripgrep) from the official repos
+# and its makedepends (bun, npm) transiently, and --removemake drops those again
+# while --cleanafter discards the build tree. claude-code is a prebuilt upstream
+# binary; its packaged wrapper sets DISABLE_UPDATES=1, which suits an image
+# whose /usr is read-only to the sandbox user anyway.
+RUN printf 'sandbox ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/99-aur-build && \
+    chmod 0440 /etc/sudoers.d/99-aur-build && \
+    su - sandbox -c \
+      'yay -Syu --noconfirm --removemake --cleanafter pi-coding-agent claude-code' && \
+    rm -f /etc/sudoers.d/99-aur-build && \
+    rm -rf /home/sandbox/.cache/yay && \
     pacman -Scc --noconfirm
 USER sandbox
 

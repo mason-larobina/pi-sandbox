@@ -23,6 +23,9 @@ mounted in.
 This builds the `sandbox` image from the `Containerfile` (installs pi, Claude
 Code, and the tools they need).
 
+pi and Claude Code are both installed from the AUR (`pi-coding-agent` and
+`claude-code`) at image-build time, so neither self-updates at runtime.
+
 The image also includes the [`yay`](https://github.com/Jguer/yay) AUR helper,
 the [`flamegraph-git`](https://aur.archlinux.org/packages/flamegraph-git) AUR
 package (which tracks upstream `HEAD`), an
