@@ -59,7 +59,9 @@ mounted read/write (or read-only for gitconfig) so agent configs and
 `cargo install`-ed binaries persist on the host. `/tmp` is backed by
 `~/src/tmp/<date>` (today's date), so each day gets a fresh scratch space and
 stale files are easy to spot; set `TMP_DATE=...` to override the date.
-Arguments are passed through, e.g.:
+The container runs with `--init`, so podman's `catatonit` is PID 1 and reaps
+orphaned processes; without it the agent is PID 1 and exited daemons such as
+Bazel servers linger as zombies. Arguments are passed through, e.g.:
 
 ```sh
 ./run.sh            # start the default agent

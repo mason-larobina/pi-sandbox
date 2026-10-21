@@ -18,7 +18,11 @@ mkdir -p "$HOME/.cargo"
 touch "$HOME/.claude.json"
 touch "$HOME/.gitconfig"
 
-podman run --rm -it \
+# --init runs catatonit as PID 1 to reap orphans. Without it the agent is PID 1
+# and never reaps, so daemons that re-parent to it (Bazel servers, git's
+# detached jobs) stay zombies, and `bazel shutdown`/`clean --expunge` wait ~70s
+# for a server that has already exited, then fail with exit 36.
+podman run --rm -it --init \
   -v "$PWD:/workspace" \
   -v "$TMP_DIR:/tmp" \
   -v "$HOME/src/worktree:/worktree" \
