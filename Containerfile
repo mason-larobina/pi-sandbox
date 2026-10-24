@@ -12,7 +12,9 @@ FROM archlinux:latest
 RUN pacman -Sy archlinux-keyring --noconfirm && \
     pacman -Syu --noconfirm \
       base-devel \
+      bind \
       ca-certificates \
+      chromium \
       clang \
       curl \
       ffmpeg \
