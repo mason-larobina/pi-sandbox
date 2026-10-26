@@ -57,8 +57,7 @@ The current directory is mounted at `/workspace` inside the container. Your
 `~/.pi`, `~/.claude`, `~/.claude.json`, `~/.cargo`, and `~/.gitconfig` are
 mounted read/write (or read-only for gitconfig) so agent configs and
 `cargo install`-ed binaries persist on the host. `/tmp` is backed by
-`~/src/tmp/<date>` (today's date), so each day gets a fresh scratch space and
-stale files are easy to spot; set `TMP_DATE=...` to override the date.
+`~/src/tmp`, so scratch files and caches under `/tmp` persist across runs.
 The container runs with `--init`, so podman's `catatonit` is PID 1 and reaps
 orphaned processes; without it the agent is PID 1 and exited daemons such as
 Bazel servers linger as zombies. `/dev/shm` is a 1 GB tmpfs (`--shm-size=1g`,
