@@ -63,6 +63,8 @@ orphaned processes; without it the agent is PID 1 and exited daemons such as
 Bazel servers linger as zombies. `/dev/shm` is a 1 GB tmpfs (`--shm-size=1g`,
 up from podman's 64 MB default) for RAM-backed scratch such as test temp
 directories; it is empty at each start and uses memory only for what it holds.
+`--pids-limit=-1` removes podman's default cap of 2048 tasks per container
+(threads count against it), which several parallel Bazel servers exceed.
 Arguments are passed through, e.g.:
 
 ```sh

@@ -20,8 +20,13 @@ touch "$HOME/.gitconfig"
 # for a server that has already exited, then fail with exit 36.
 # --shm-size raises /dev/shm from podman's 64 MB so test suites can keep their
 # temp files in RAM; tmpfs only uses memory for what is stored.
+# --pids-limit=-1 lifts podman's default cgroup cap of 2048 tasks (threads
+# count). Parallel agent lanes each run a Bazel server with hundreds of threads;
+# at the cap the JVMs die with "unable to create native thread". The host's own
+# limits still apply.
 podman run --rm -it --init \
   --shm-size=1g \
+  --pids-limit=-1 \
   -v "$PWD:/workspace" \
   -v "$HOME/src/tmp:/tmp" \
   -v "$HOME/src/worktree:/worktree" \
