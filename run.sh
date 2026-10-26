@@ -18,7 +18,10 @@ touch "$HOME/.gitconfig"
 # and never reaps, so daemons that re-parent to it (Bazel servers, git's
 # detached jobs) stay zombies, and `bazel shutdown`/`clean --expunge` wait ~70s
 # for a server that has already exited, then fail with exit 36.
+# --shm-size raises /dev/shm from podman's 64 MB so test suites can keep their
+# temp files in RAM; tmpfs only uses memory for what is stored.
 podman run --rm -it --init \
+  --shm-size=1g \
   -v "$PWD:/workspace" \
   -v "$HOME/src/tmp:/tmp" \
   -v "$HOME/src/worktree:/worktree" \

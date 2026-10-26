@@ -61,7 +61,10 @@ mounted read/write (or read-only for gitconfig) so agent configs and
 stale files are easy to spot; set `TMP_DATE=...` to override the date.
 The container runs with `--init`, so podman's `catatonit` is PID 1 and reaps
 orphaned processes; without it the agent is PID 1 and exited daemons such as
-Bazel servers linger as zombies. Arguments are passed through, e.g.:
+Bazel servers linger as zombies. `/dev/shm` is a 1 GB tmpfs (`--shm-size=1g`,
+up from podman's 64 MB default) for RAM-backed scratch such as test temp
+directories; it is empty at each start and uses memory only for what it holds.
+Arguments are passed through, e.g.:
 
 ```sh
 ./run.sh            # start the default agent
