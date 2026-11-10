@@ -30,6 +30,7 @@ RUN pacman -Sy archlinux-keyring --noconfirm && \
       musl \
       nodejs \
       noto-fonts \
+      noto-fonts-emoji \
       npm \
       prettier \
       python \
@@ -40,6 +41,8 @@ RUN pacman -Sy archlinux-keyring --noconfirm && \
       rustup \
       sysstat \
       tailscale \
+      ttf-dejavu \
+      ttf-liberation \
       unzip \
       yt-dlp \
     && pacman -Scc --noconfirm
@@ -78,6 +81,14 @@ RUN mkdir -p /home/sandbox/.pi /home/sandbox/.claude
 # the sandbox user's PATH instead of the unwritable /usr. Claude Code itself
 # comes from the AUR below, not from npm.
 RUN npm config set prefix /home/sandbox/.local
+
+# Playwright without its bundled browsers, for headless page inspection: scripts
+# launch the system Chromium via executablePath: '/usr/bin/chromium', with
+# chromiumSandbox: false since rootless podman blocks its nested user namespaces.
+RUN npm install -g playwright-core
+# Global packages are not on Node's module search path; NODE_PATH lets a script
+# in any directory `require('playwright-core')`.
+ENV NODE_PATH=/home/sandbox/.local/lib/node_modules
 
 # Build the AUR packages (yay and flamegraph-git) from source. makepkg refuses
 # to run as root, so build them as the sandbox user; the packages are installed

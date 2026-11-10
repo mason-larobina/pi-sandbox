@@ -31,8 +31,11 @@ the [`flamegraph-git`](https://aur.archlinux.org/packages/flamegraph-git) AUR
 package (which tracks upstream `HEAD`), an
 [`async-profiler`](https://github.com/async-profiler/async-profiler) build from
 upstream `HEAD`, and the JDK's `jfr`, `jlink`, `jmod`, `jhsdb`, `jstatd`, and
-`serialver` tools symlinked into `/usr/local/bin`. Everything is installed at
-image-build time. `sudo` is intentionally left locked (the `sandbox` account has
+`serialver` tools symlinked into `/usr/local/bin`. For headless inspection of
+web pages it ships Chromium, a global `playwright-core` (no bundled browsers;
+launch `/usr/bin/chromium` via `executablePath` with `chromiumSandbox: false`),
+and Liberation, DejaVu and Noto emoji fonts so common web fonts fall back with
+matching metrics. Everything is installed at image-build time. `sudo` is intentionally left locked (the `sandbox` account has
 no password), so packages cannot be installed at runtime — only those baked into
 this image are available. yay still works for read-only operations such as
 searching and inspecting the AUR.
