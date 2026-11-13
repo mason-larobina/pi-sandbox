@@ -5,6 +5,18 @@
 
 FROM archlinux:latest
 
+# Turn off pacman's download sandbox. Pacman 7 runs downloads as a separate
+# 'alpm' user and confines them with a landlock filesystem ruleset and a
+# seccomp syscall filter; both are pointless here (the container already
+# confines the whole build) and fail under rootless podman, where the download
+# child cannot be set up. This has to happen before the first pacman call below,
+# and sed is idempotent so the uncomment also works if upstream ever flips the
+# default. DownloadUser = alpm is left alone: with both sandbox layers off it is
+# only the privilege split that pacman 7 ships by default.
+RUN sed -i -e 's/^#DisableSandboxFilesystem/DisableSandboxFilesystem/' \
+           -e 's/^#DisableSandboxSyscalls/DisableSandboxSyscalls/' \
+           /etc/pacman.conf
+
 # Refresh package databases and install runtime dependencies pi needs
 # (curl for the install script, git/ripgrep for tooling, ca-certificates for TLS).
 # Refresh the keyring first: on a stale base image `-Syu` can fail because the
