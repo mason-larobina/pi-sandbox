@@ -6,13 +6,9 @@ set -euo pipefail
 # ~/.claude.json or ~/.gitconfig, which then breaks claude/git on the whole
 # system).
 
-mkdir -p "$HOME/src/tmp"
+mkdir -p "$HOME/.sandbox/home"
+mkdir -p "$HOME/.sandbox/tmp"
 mkdir -p "$HOME/src/worktree"
-mkdir -p "$HOME/.pi"
-mkdir -p "$HOME/.claude"
-mkdir -p "$HOME/.cargo"
-touch "$HOME/.claude.json"
-touch "$HOME/.gitconfig"
 
 # --init runs catatonit as PID 1 to reap orphans. Without it the agent is PID 1
 # and never reaps, so daemons that re-parent to it (Bazel servers, git's
@@ -28,13 +24,9 @@ podman run --rm -it --init \
   --shm-size=1g \
   --pids-limit=-1 \
   -v "$PWD:/workspace" \
-  -v "$HOME/src/tmp:/tmp" \
+  -v "$HOME/.sandbox/home:/home/sandbox" \
+  -v "$HOME/.sandbox/tmp:/tmp" \
   -v "$HOME/src/worktree:/worktree" \
-  -v "$HOME/.pi:/home/sandbox/.pi" \
-  -v "$HOME/.claude:/home/sandbox/.claude" \
-  -v "$HOME/.cargo:/home/sandbox/.cargo" \
-  -v "$HOME/.claude.json:/home/sandbox/.claude.json" \
-  -v "$HOME/.gitconfig:/home/sandbox/.gitconfig:ro" \
   -w /workspace \
   --userns=keep-id \
   sandbox \
